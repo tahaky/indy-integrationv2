@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: indy-integration-service-test
+
+acapy:
+  base-url: http://localhost:8021
+  read-timeout: 30000
