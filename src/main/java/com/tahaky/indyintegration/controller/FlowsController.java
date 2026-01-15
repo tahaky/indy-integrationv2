@@ -1,13 +1,7 @@
 package com.tahaky.indyintegration.controller;
 
 import com.tahaky.indyintegration.dto.flow.*;
-import com.tahaky.indyintegration.dto.oob.CreateInvitationRequest;
-import com.tahaky.indyintegration.dto.oob.InvitationResponse;
-import com.tahaky.indyintegration.dto.proof.CreateProofRequestRequest;
-import com.tahaky.indyintegration.dto.proof.PresentationExchangeRecord;
-import com.tahaky.indyintegration.dto.credential.CreateOfferRequest;
-import com.tahaky.indyintegration.dto.credential.CredentialExchangeRecord;
-import com.tahaky.indyintegration.service.AcaPyClientService;
+import com.tahaky.indyintegration.service.FlowsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -15,19 +9,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 @RestController
 @RequestMapping("/v1/flows")
 @Tag(name = "Flows", description = "Orchestration flow endpoints")
 public class FlowsController {
 
-    private final AcaPyClientService acaPyClient;
+    private final FlowsService flowsService;
 
-    public FlowsController(AcaPyClientService acaPyClient) {
-        this.acaPyClient = acaPyClient;
+    public FlowsController(FlowsService flowsService) {
+        this.flowsService = flowsService;
     }
 
     @PostMapping("/oob-proof-invitation")
@@ -40,39 +30,7 @@ public class FlowsController {
     })
     public Mono<OobProofInvitationResponse> createOobProofInvitation(
             @RequestBody OobProofInvitationRequest request) {
-
-        // Step 1: Create proof request
-        CreateProofRequestRequest proofRequest = CreateProofRequestRequest.builder()
-                .presentationRequest(request.getPresentationRequest())
-                .comment(request.getComment())
-                .autoVerify(request.getAutoVerify())
-                .build();
-
-        return acaPyClient.post("/present-proof-2.0/create-request", proofRequest, PresentationExchangeRecord.class)
-                .flatMap(proofRecord -> {
-                    // Step 2: Create OOB invitation with proof request attachment
-                    Map<String, Object> attachment = new HashMap<>();
-                    attachment.put("@id", proofRecord.getThreadId());
-                    attachment.put("mime-type", "application/json");
-                    
-                    Map<String, Object> data = new HashMap<>();
-                    data.put("json", proofRecord.getPresentationRequest());
-                    attachment.put("data", data);
-
-                    CreateInvitationRequest invitationRequest = CreateInvitationRequest.builder()
-                            .alias(request.getAlias())
-                            .handshakeProtocols(List.of("https://didcomm.org/didexchange/1.0"))
-                            .attachments(List.of(attachment))
-                            .build();
-
-                    return acaPyClient.post("/out-of-band/create-invitation", invitationRequest, InvitationResponse.class)
-                            .map(invitationResponse -> OobProofInvitationResponse.builder()
-                                    .invitationUrl(invitationResponse.getInvitationUrl())
-                                    .oobId(invitationResponse.getOobId())
-                                    .inviMsgId(invitationResponse.getInviMsgId())
-                                    .presExId(proofRecord.getPresExId())
-                                    .build());
-                });
+        return flowsService.createOobProofInvitation(request);
     }
 
     @PostMapping("/oob-credential-offer-invitation")
@@ -85,39 +43,6 @@ public class FlowsController {
     })
     public Mono<OobCredentialOfferInvitationResponse> createOobCredentialOfferInvitation(
             @RequestBody OobCredentialOfferInvitationRequest request) {
-
-        // Step 1: Create credential offer
-        CreateOfferRequest offerRequest = CreateOfferRequest.builder()
-                .filter(request.getFilter())
-                .credentialPreview(request.getCredentialPreview())
-                .comment(request.getComment())
-                .autoIssue(request.getAutoIssue())
-                .build();
-
-        return acaPyClient.post("/issue-credential-2.0/create-offer", offerRequest, CredentialExchangeRecord.class)
-                .flatMap(credRecord -> {
-                    // Step 2: Create OOB invitation with credential offer attachment
-                    Map<String, Object> attachment = new HashMap<>();
-                    attachment.put("@id", credRecord.getThreadId());
-                    attachment.put("mime-type", "application/json");
-                    
-                    Map<String, Object> data = new HashMap<>();
-                    data.put("json", credRecord.getCredentialOffer());
-                    attachment.put("data", data);
-
-                    CreateInvitationRequest invitationRequest = CreateInvitationRequest.builder()
-                            .alias(request.getAlias())
-                            .handshakeProtocols(List.of("https://didcomm.org/didexchange/1.0"))
-                            .attachments(List.of(attachment))
-                            .build();
-
-                    return acaPyClient.post("/out-of-band/create-invitation", invitationRequest, InvitationResponse.class)
-                            .map(invitationResponse -> OobCredentialOfferInvitationResponse.builder()
-                                    .invitationUrl(invitationResponse.getInvitationUrl())
-                                    .oobId(invitationResponse.getOobId())
-                                    .inviMsgId(invitationResponse.getInviMsgId())
-                                    .credExId(credRecord.getCredExId())
-                                    .build());
-                });
+        return flowsService.createOobCredentialOfferInvitation(request);
     }
 }
