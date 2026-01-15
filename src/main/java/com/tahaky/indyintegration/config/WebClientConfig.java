@@ -24,9 +24,6 @@ public class WebClientConfig {
     @Value("${acapy.base-url}")
     private String acapyBaseUrl;
 
-    @Value("${acapy.connect-timeout}")
-    private int connectTimeout;
-
     @Value("${acapy.read-timeout}")
     private int readTimeout;
 
