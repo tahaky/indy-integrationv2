@@ -63,8 +63,8 @@ public class WebClientConfig {
                     .attribute("startTime", startTime)
                     .build());
         }).andThen(ExchangeFilterFunction.ofResponseProcessor(response -> {
-            // Note: Response attributes are not directly accessible in Spring Boot 3
-            // We'll just log the status code without duration for now
+            // Note: In Spring Boot 3, response attributes are not directly accessible
+            // Logging only status code without duration to keep implementation simple
             log.info("Outbound ACA-Py response: status={}", response.statusCode());
             return Mono.just(response);
         }));
