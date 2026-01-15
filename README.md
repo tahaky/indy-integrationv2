@@ -6,6 +6,7 @@ A Spring Boot 3 (Java 17) integration/facade service that provides clean REST en
 
 - **Clean REST API**: Well-structured endpoints under `/v1` prefix
 - **Full Swagger/OpenAPI Documentation**: Interactive API documentation at `/swagger-ui.html`
+- **Automated Credential Issuance**: Generic endpoint that works with any credential schema
 - **Correlation ID Support**: Automatic correlation ID tracking across requests
 - **Request/Response Logging**: Comprehensive logging with correlation IDs in MDC
 - **Error Handling**: Standardized error responses with `ApiError` model
@@ -80,6 +81,7 @@ http://localhost:8080/api-docs
 ### Credentials (Issue Credential 2.0)
 - `POST /v1/credentials/v2/offers` - Create credential offer
 - `POST /v1/credentials/v2/send` - Send credential
+- `POST /v1/credentials/v2/issue` - **Automated credential issuance** (new)
 - `GET /v1/credentials/v2/records` - List credential exchange records
 - `GET /v1/credentials/v2/records/{cred_ex_id}` - Get credential exchange record
 
@@ -93,6 +95,47 @@ http://localhost:8080/api-docs
 ### Orchestration Flows
 - `POST /v1/flows/oob-proof-invitation` - Create OOB invitation with embedded proof request
 - `POST /v1/flows/oob-credential-offer-invitation` - Create OOB invitation with embedded credential offer
+
+## Automated Credential Issuance
+
+The service provides a simplified, generic endpoint for credential issuance that works with any credential schema:
+
+```bash
+POST /v1/credentials/v2/issue
+```
+
+**Request Body:**
+```json
+{
+  "connection_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "cred_def_id": "WgWxqztrNooG92RXvxSTWv:3:CL:20:tag",
+  "attributes": {
+    "name": "John Doe",
+    "age": "30",
+    "email": "john@example.com"
+  },
+  "comment": "Identity verification credential",
+  "auto_issue": true,
+  "auto_remove": false,
+  "trace": false
+}
+```
+
+**Key Features:**
+- **Generic JSON Attributes**: Works with any credential schema - just provide attribute name-value pairs
+- **Control Flows**: Support for `auto_issue`, `auto_remove`, and `trace` flags for workflow control
+- **Information Approval**: Can be configured to require holder approval before issuance (`auto_issue: false`)
+
+**Response:**
+```json
+{
+  "cred_ex_id": "v2-12345678-90ab-cdef-1234-567890abcdef",
+  "connection_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "state": "offer-sent",
+  "thread_id": "thread-12345",
+  "created_at": "2026-01-15T22:00:00.000Z"
+}
+```
 
 ## Correlation ID
 

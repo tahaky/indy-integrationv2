@@ -128,12 +128,8 @@ public class CredentialsController {
         preview.put("@type", "https://didcomm.org/issue-credential/2.0/credential-preview");
         
         List<Map<String, String>> attributesList = new ArrayList<>();
-        attributes.forEach((name, value) -> {
-            Map<String, String> attribute = new HashMap<>();
-            attribute.put("name", name);
-            attribute.put("value", value);
-            attributesList.add(attribute);
-        });
+        attributes.forEach((name, value) ->
+                attributesList.add(Map.of("name", name, "value", value)));
         
         preview.put("attributes", attributesList);
         return preview;
