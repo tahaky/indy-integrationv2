@@ -7,6 +7,7 @@ import com.tahaky.indyintegration.dto.credential.SendCredentialRequest;
 import com.tahaky.indyintegration.dto.credential.IssueCredentialRequest;
 import com.tahaky.indyintegration.dto.credential.IssueCredentialResponse;
 import com.tahaky.indyintegration.service.AcaPyClientService;
+import com.tahaky.indyintegration.service.CredentialService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,20 +17,17 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 @RestController
 @RequestMapping("/v1/credentials/v2")
 @Tag(name = "Credentials V2", description = "Issue Credential 2.0 protocol endpoints")
 public class CredentialsController {
 
     private final AcaPyClientService acaPyClient;
+    private final CredentialService credentialService;
 
-    public CredentialsController(AcaPyClientService acaPyClient) {
+    public CredentialsController(AcaPyClientService acaPyClient, CredentialService credentialService) {
         this.acaPyClient = acaPyClient;
+        this.credentialService = credentialService;
     }
 
     @PostMapping("/offers")
@@ -89,49 +87,6 @@ public class CredentialsController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public Mono<IssueCredentialResponse> issueCredential(@Valid @RequestBody IssueCredentialRequest request) {
-        // Build credential preview with attributes
-        Map<String, Object> credentialPreview = buildCredentialPreview(request.getAttributes());
-        
-        // Build filter with cred_def_id
-        Map<String, Object> filter = new HashMap<>();
-        Map<String, Object> indyFilter = new HashMap<>();
-        indyFilter.put("cred_def_id", request.getCredDefId());
-        filter.put("indy", indyFilter);
-        
-        // Build the send credential request
-        SendCredentialRequest sendRequest = SendCredentialRequest.builder()
-                .connectionId(request.getConnectionId())
-                .filter(filter)
-                .credentialPreview(credentialPreview)
-                .comment(request.getComment())
-                .autoRemove(request.getAutoRemove() != null ? request.getAutoRemove() : false)
-                .trace(request.getTrace() != null ? request.getTrace() : false)
-                .build();
-        
-        // Call ACA-Py send credential endpoint
-        return acaPyClient.post("/issue-credential-2.0/send", sendRequest, CredentialExchangeRecord.class)
-                .map(record -> IssueCredentialResponse.builder()
-                        .credExId(record.getCredExId())
-                        .connectionId(record.getConnectionId())
-                        .state(record.getState())
-                        .threadId(record.getThreadId())
-                        .createdAt(record.getCreatedAt())
-                        .build());
-    }
-    
-    /**
-     * Builds the credential preview structure from attributes map.
-     * The credential preview follows ACA-Py's expected format.
-     */
-    private Map<String, Object> buildCredentialPreview(Map<String, String> attributes) {
-        Map<String, Object> preview = new HashMap<>();
-        preview.put("@type", "https://didcomm.org/issue-credential/2.0/credential-preview");
-        
-        List<Map<String, String>> attributesList = new ArrayList<>();
-        attributes.forEach((name, value) ->
-                attributesList.add(Map.of("name", name, "value", value)));
-        
-        preview.put("attributes", attributesList);
-        return preview;
+        return credentialService.issueCredential(request);
     }
 }
