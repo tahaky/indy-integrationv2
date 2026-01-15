@@ -1,11 +1,10 @@
 package com.tahaky.indyintegration.controller;
 
-import com.tahaky.indyintegration.dto.credential.CredentialExchangeRecord;
 import com.tahaky.indyintegration.dto.credential.IssueCredentialRequest;
 import com.tahaky.indyintegration.dto.credential.IssueCredentialResponse;
 import com.tahaky.indyintegration.service.AcaPyClientService;
+import com.tahaky.indyintegration.service.CredentialService;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -15,9 +14,7 @@ import reactor.core.publisher.Mono;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -29,6 +26,9 @@ class CredentialsControllerIssueTest {
 
     @MockBean
     private AcaPyClientService acaPyClientService;
+
+    @MockBean
+    private CredentialService credentialService;
 
     @Test
     void testIssueCredential() {
@@ -46,7 +46,7 @@ class CredentialsControllerIssueTest {
                 .autoIssue(true)
                 .build();
 
-        CredentialExchangeRecord mockRecord = CredentialExchangeRecord.builder()
+        IssueCredentialResponse mockResponse = IssueCredentialResponse.builder()
                 .credExId("cred-ex-123")
                 .connectionId("conn-123")
                 .state("offer-sent")
@@ -54,8 +54,8 @@ class CredentialsControllerIssueTest {
                 .createdAt("2026-01-15T22:00:00.000Z")
                 .build();
 
-        when(acaPyClientService.post(eq("/issue-credential-2.0/send"), any(), eq(CredentialExchangeRecord.class)))
-                .thenReturn(Mono.just(mockRecord));
+        when(credentialService.issueCredential(any(IssueCredentialRequest.class)))
+                .thenReturn(Mono.just(mockResponse));
 
         // Act & Assert
         webTestClient.post()
@@ -70,13 +70,8 @@ class CredentialsControllerIssueTest {
                 .jsonPath("$.thread_id").isEqualTo("thread-123")
                 .jsonPath("$.created_at").isEqualTo("2026-01-15T22:00:00.000Z");
 
-        // Verify the request sent to ACA-Py
-        ArgumentCaptor<Object> requestCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(acaPyClientService).post(
-                eq("/issue-credential-2.0/send"),
-                requestCaptor.capture(),
-                eq(CredentialExchangeRecord.class)
-        );
+        // Verify the service was called
+        verify(credentialService).issueCredential(any(IssueCredentialRequest.class));
     }
 
     @Test
@@ -103,14 +98,14 @@ class CredentialsControllerIssueTest {
                 .attributes(Map.of())
                 .build();
 
-        CredentialExchangeRecord mockRecord = CredentialExchangeRecord.builder()
+        IssueCredentialResponse mockResponse = IssueCredentialResponse.builder()
                 .credExId("cred-ex-456")
                 .connectionId("conn-123")
                 .state("offer-sent")
                 .build();
 
-        when(acaPyClientService.post(eq("/issue-credential-2.0/send"), any(), eq(CredentialExchangeRecord.class)))
-                .thenReturn(Mono.just(mockRecord));
+        when(credentialService.issueCredential(any(IssueCredentialRequest.class)))
+                .thenReturn(Mono.just(mockResponse));
 
         // Act & Assert - empty attributes should still work
         webTestClient.post()
