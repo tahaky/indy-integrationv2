@@ -27,15 +27,7 @@ public class FlowsMapper {
      * @return Map representing the attachment
      */
     public Map<String, Object> buildProofAttachment(String threadId, Object presentationRequest) {
-        Map<String, Object> attachment = new HashMap<>();
-        attachment.put("@id", threadId);
-        attachment.put("mime-type", "application/json");
-        
-        Map<String, Object> data = new HashMap<>();
-        data.put("json", presentationRequest);
-        attachment.put("data", data);
-        
-        return attachment;
+        return buildAttachment(threadId, presentationRequest);
     }
 
     /**
@@ -46,12 +38,23 @@ public class FlowsMapper {
      * @return Map representing the attachment
      */
     public Map<String, Object> buildCredentialAttachment(String threadId, Object credentialOffer) {
+        return buildAttachment(threadId, credentialOffer);
+    }
+
+    /**
+     * Builds an attachment structure for OOB invitations.
+     *
+     * @param threadId The thread ID
+     * @param content The content to attach (proof request or credential offer)
+     * @return Map representing the attachment
+     */
+    private Map<String, Object> buildAttachment(String threadId, Object content) {
         Map<String, Object> attachment = new HashMap<>();
         attachment.put("@id", threadId);
         attachment.put("mime-type", "application/json");
         
         Map<String, Object> data = new HashMap<>();
-        data.put("json", credentialOffer);
+        data.put("json", content);
         attachment.put("data", data);
         
         return attachment;
