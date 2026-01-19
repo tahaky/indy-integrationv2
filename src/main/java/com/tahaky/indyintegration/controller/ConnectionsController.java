@@ -3,6 +3,7 @@ package com.tahaky.indyintegration.controller;
 import com.tahaky.indyintegration.dto.connection.ConnectionListResponse;
 import com.tahaky.indyintegration.dto.connection.ConnectionRecord;
 import com.tahaky.indyintegration.dto.connection.SendMessageRequest;
+import com.tahaky.indyintegration.exception.ResourceNotFoundException;
 import com.tahaky.indyintegration.service.AcaPyClientService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -36,7 +37,10 @@ public class ConnectionsController {
     }
 
     @GetMapping("/by-alias")
-    @Operation(summary = "Get connection by alias", description = "Retrieves connection ID using alias")
+    @Operation(
+            summary = "Get connection by alias", 
+            description = "Retrieves connection by alias. If multiple connections have the same alias, returns the first one found."
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Connection retrieved successfully"),
             @ApiResponse(responseCode = "404", description = "Connection not found"),
@@ -50,7 +54,7 @@ public class ConnectionsController {
                 ConnectionListResponse.class)
                 .map(response -> {
                     if (response.getResults() == null || response.getResults().isEmpty()) {
-                        throw new RuntimeException("Connection not found with alias: " + alias);
+                        throw new ResourceNotFoundException("Connection not found with alias: " + alias);
                     }
                     return response.getResults().get(0);
                 });
