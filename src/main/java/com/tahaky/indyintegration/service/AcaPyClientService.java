@@ -22,6 +22,17 @@ public class AcaPyClientService {
                 .retrieve()
                 .bodyToMono(responseType);
     }
+    
+    public <T> Mono<T> get(String path, Map<String, String> queryParams, Class<T> responseType) {
+        return webClient.get()
+                .uri(uriBuilder -> {
+                    uriBuilder.path(path);
+                    queryParams.forEach(uriBuilder::queryParam);
+                    return uriBuilder.build();
+                })
+                .retrieve()
+                .bodyToMono(responseType);
+    }
 
     public <T> Mono<T> post(String path, Object request, Class<T> responseType) {
         return webClient.post()

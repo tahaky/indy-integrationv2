@@ -35,6 +35,27 @@ public class ConnectionsController {
         return acaPyClient.get("/connections", ConnectionListResponse.class);
     }
 
+    @GetMapping("/by-alias")
+    @Operation(summary = "Get connection by alias", description = "Retrieves connection ID using alias")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Connection retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Connection not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public Mono<ConnectionRecord> getConnectionByAlias(
+            @Parameter(description = "Connection alias", required = true)
+            @RequestParam("alias") String alias) {
+        return acaPyClient.get("/connections", 
+                Map.of("alias", alias), 
+                ConnectionListResponse.class)
+                .map(response -> {
+                    if (response.getResults() == null || response.getResults().isEmpty()) {
+                        throw new RuntimeException("Connection not found with alias: " + alias);
+                    }
+                    return response.getResults().get(0);
+                });
+    }
+
     @GetMapping("/{conn_id}")
     @Operation(summary = "Get connection", description = "Retrieves a specific connection by ID")
     @ApiResponses(value = {

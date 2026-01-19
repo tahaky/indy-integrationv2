@@ -37,6 +37,9 @@ public class ConnectionRecord {
     @JsonProperty("invitation_key")
     private String invitationKey;
     
+    @JsonProperty("alias")
+    private String alias;
+    
     @JsonProperty("created_at")
     private String createdAt;
     
